@@ -9,7 +9,7 @@ class QuotesSpider(scrapy.Spider):
 
     def start_requests(self):
         urls = []
-        for pageno in range(1,MAX_PAGE_NO+1):
+        for pageno in range(13192,MAX_PAGE_NO+1):
                 url = 'http://www.lemonde.fr/recherche/?keywords=+politique&page_num={}'.format(int(pageno))
                 urls.append(url)
 
@@ -22,8 +22,8 @@ class QuotesSpider(scrapy.Spider):
         filename = "/home/sarthak/Mydata/Projects/silicon-beach-data/urls/" + "lemonde-fr-Spider-links_" + search_string+  ".csv"
         with open(filename, 'a') as f:
             try:
-                div = response.xpath('//div[@class="grid_8 omega resultat"]')
-                for links in div.xpath('.//h3/a[contains(@href, "")]/@href'):
+                div = response.xpath('//h3')
+                for links in div.xpath('.//a[contains(@href, ".html")]/@href'):
                     linkList = links.extract()
                     current_link = "http://www.lemonde.fr/" + linkList + "\n"
                     print(current_link)
