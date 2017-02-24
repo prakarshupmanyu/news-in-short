@@ -1,16 +1,16 @@
 import scrapy
 
-MAX_PAGE_NO = 1000#13186
+MAX_PAGE_NO = 100#10
 
 urls = []
 
 class QuotesSpider(scrapy.Spider):
-    name = "ouest-france-spider"
+    name = "lesechos-fr-spider"
 
     def start_requests(self):
         urls = []
-        for pageno in range(100,MAX_PAGE_NO):
-                url = 'http://www.ouest-france.fr/search/site/politique/?page={}'.format(int(pageno))
+        for pageno in range(3,MAX_PAGE_NO+1):
+                url = 'http://recherche.lesechos.fr/recherche.php?exec=1&texte=politique&page={}'.format(int(pageno))
                 urls.append(url)
 
         for url in urls:
@@ -19,14 +19,14 @@ class QuotesSpider(scrapy.Spider):
     def parse1(self, response):
 
         search_string = "politique"
-        filename = "/home/melvin/Documents/USC/news-in-short-data/urls/" + "ouest-france-spider-links_" + search_string+  ".csv"
+        filename = "/home/melvin/Documents/USC/news-in-short-data/urls/" + "lesechos-fr-spider-links_" + search_string+  ".csv"
         with open(filename, 'a') as f:
             try:
-                div = response.xpath('//h2[@class="title"]')
-                for links in div.xpath('a[contains(@href,".fr")]/@href'):
+                div = response.xpath('//h2[@class="style-titre"]')
+                for links in div.xpath('a[contains(@href,".php")]/@href'):
                     linkList = links.extract()
                     current_link = linkList + "\n"
-                    #print(current_link)
+                    print(current_link)
                     f.write(current_link)
                     #urls.append(current_link)
             except Exception as e:
