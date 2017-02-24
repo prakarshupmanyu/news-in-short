@@ -1,22 +1,22 @@
 # French News for lazy ass
 
-### Setup
+#### Setup
 
 Few points to remember
 
 * We will be using the git branching model according to [this](http://jeffkreeftmeijer.com/2010/why-arent-you-using-git-flow/)
-..* There is a [git plugin](https://github.com/nvie/gitflow) for the same.
-..* It is important that we branch from the branch develop (always), not doing so could cause merge conflicts.
-..* Only tested code would be pushed to master.
+  * There is a [git plugin](https://github.com/nvie/gitflow) for the same.
+  * It is important that we branch from the branch develop (always), not doing so could cause merge conflicts.
+  * Only tested code would be pushed to master.
 
 ***
 
 
-### Scrapping 
+#### Scrapping 
 * Things that require a change:
-..* page no
-..* MAX_PAGE_NO
-..* name of the spider
+  * page no
+  * MAX_PAGE_NO
+  * name of the spider
 * Follow the convention i have follwed , ie lemonde-fr-spiderurl
 * You have to go to the website, enter your search string and copy the url, also note the max pages to be iterated.
 then parse is responsible for parsing html pages
@@ -24,9 +24,8 @@ then parse is responsible for parsing html pages
 * Follow scrapy tutorial for more details
 
 ***
-***
 
-## Proposal
+### Proposal
 
 #### Introduction
 The limitation of time caters to the reluctance of many individuals to read long-winded news articles. In the current scenario where headlines are misleading we need a synoptic view of an article.
@@ -56,7 +55,6 @@ We will use Tensorflow's python library to implement the proposed sequence to se
 ##### Evaluation
 In order to evaluate the performance of the summarizer, we will use FRESA which is capable of evaluating the generated summaries without reference summaries. FRESA is similar to ROUGE and works by calculating the divergence of the generated summary and the original article. In this case, we will be using the Kullback-Leibler (KL) divergence with Dirichlet smoothing for evaluation (Saggion et al., 2010).
 
-***
 ***
 
 PS: If I missed out something please add.
