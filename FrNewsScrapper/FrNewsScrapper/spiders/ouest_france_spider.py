@@ -1,6 +1,6 @@
 import scrapy
 
-MAX_PAGE_NO = 64880
+MAX_PAGE_NO = 2#13186
 
 urls = []
 
@@ -9,8 +9,8 @@ class QuotesSpider(scrapy.Spider):
 
     def start_requests(self):
         urls = []
-        for pageno in range(13192,MAX_PAGE_NO+1):
-                url = 'http://www.lemonde.fr/recherche/?keywords=+politique&page_num={}'.format(int(pageno))
+        for pageno in range(0,MAX_PAGE_NO):
+                url = 'http://www.ouest-france.fr/search/site/politique/?page={}'.format(int(pageno))
                 urls.append(url)
 
         for url in urls:
@@ -19,13 +19,13 @@ class QuotesSpider(scrapy.Spider):
     def parse1(self, response):
 
         search_string = "politique"
-        filename = "/home/sarthak/Mydata/Projects/silicon-beach-data/urls/" + "lemonde-fr-Spider-links_" + search_string+  ".csv"
+        filename = "/home/melvin/Documents/USC/news-in-short-data/urls/" + "ouest-france-spider-links_" + search_string+  ".csv"
         with open(filename, 'a') as f:
             try:
-                div = response.xpath('//h3')
-                for links in div.xpath('.//a[contains(@href, ".html")]/@href'):
+                div = response.xpath('//h2[@class="title"]')
+                for links in div.xpath('a[contains(@href,".fr")]/@href'):
                     linkList = links.extract()
-                    current_link = "http://www.lemonde.fr/" + linkList + "\n"
+                    current_link = linkList + "\n"
                     print(current_link)
                     f.write(current_link)
                     urls.append(current_link)
