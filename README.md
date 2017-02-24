@@ -8,7 +8,7 @@ Few points to remember
   * There is a [git plugin](https://github.com/nvie/gitflow) for the same.
   * It is important that we branch from the branch develop (always), not doing so could cause merge conflicts.
   * Only tested code would be pushed to master.
-  * When merging features to develop please create a pull request and then merge. This will help us in roling back when we merge something undesirable.
+  * When merging features to develop please create a pull request and then merge. This will help us in roling back the changes.
 * For first time git users, please use a git GUI like sourcetree. 
 
 ***
