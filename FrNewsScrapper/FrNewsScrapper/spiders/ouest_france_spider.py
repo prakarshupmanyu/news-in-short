@@ -1,6 +1,6 @@
 import scrapy
 
-MAX_PAGE_NO = 1000#13186
+MAX_PAGE_NO = 13186
 
 urls = []
 
@@ -9,7 +9,7 @@ class QuotesSpider(scrapy.Spider):
 
     def start_requests(self):
         urls = []
-        for pageno in range(100,MAX_PAGE_NO):
+        for pageno in range(10000,MAX_PAGE_NO):
                 url = 'http://www.ouest-france.fr/search/site/politique/?page={}'.format(int(pageno))
                 urls.append(url)
 

@@ -1,6 +1,6 @@
 import scrapy
 
-MAX_PAGE_NO = 100#10
+MAX_PAGE_NO = 4693#4693
 
 urls = []
 
@@ -9,7 +9,7 @@ class QuotesSpider(scrapy.Spider):
 
     def start_requests(self):
         urls = []
-        for pageno in range(3,MAX_PAGE_NO+1):
+        for pageno in range(3001,MAX_PAGE_NO+1):
                 url = 'http://recherche.lesechos.fr/recherche.php?exec=1&texte=politique&page={}'.format(int(pageno))
                 urls.append(url)
 
@@ -26,7 +26,7 @@ class QuotesSpider(scrapy.Spider):
                 for links in div.xpath('a[contains(@href,".php")]/@href'):
                     linkList = links.extract()
                     current_link = linkList + "\n"
-                    print(current_link)
+                    #print(current_link)
                     f.write(current_link)
                     #urls.append(current_link)
             except Exception as e:
