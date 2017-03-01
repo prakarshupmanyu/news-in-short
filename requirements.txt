@@ -3,6 +3,7 @@ appdirs==1.4.1
 attrs==16.3.0
 Automat==0.5.0
 BeautifulSoup==3.2.1
+boto==2.46.1
 cffi==1.9.1
 constantly==15.1.0
 cryptography==1.7.2
