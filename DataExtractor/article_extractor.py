@@ -10,7 +10,7 @@ import goose
 from goose import Goose
 
 
-path = '/home/sarthak/Mydata/Projects/silicon-beach-data/urls/'
+path = '/home/melvin/Documents/USC/news-in-short-data/urls/'
 
 csvLinkFiles_path = path
 dirs = os.listdir(csvLinkFiles_path)
@@ -42,7 +42,7 @@ for file in dirs:
         print(datafilename)
 
         dataStoragefile = path + datafilename
-
+        
         for link in linksList:
             try:
                 g = goose.Goose({'target_language': 'fr'})
@@ -86,7 +86,7 @@ for file in dirs:
         end_time = time()
 
     except Exception as error:
-        print("NA File")
+        print(error)
 
 print(path + "..... Done")
 
