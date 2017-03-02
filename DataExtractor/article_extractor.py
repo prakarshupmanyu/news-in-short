@@ -25,7 +25,7 @@ except IndexError:
     sys.exit(0)
 
 try:
-    start_value = sys.argv[3]
+    start_value = int(sys.argv[3])
 except IndexError:
     print "Starting from row :: 0"
     start_value = 0
