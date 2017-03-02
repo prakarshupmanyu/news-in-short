@@ -27,14 +27,14 @@ bucket = conn.get_bucket('news-in-short', validate=False)
 
 files = []
 my_mac = get_mac()
-user_macs = [145376947886732, 146162447908330, 202866753072730]
+user_macs = [145376947886732, 146162447908330, 202866753072730, 48853196067632]
 
 for key in bucket.list():
     if "links_politique.csv" in key.name:
         files.append(key.name)
 
 files.sort()
-dirs = [files[i] for i in range(len(files)) if i%len(files) == user_macs.index(my_mac)]
+dirs = [files[i] for i in range(len(files)) if i%len(user_macs) == user_macs.index(my_mac)]
 path = 'https://s3-us-west-1.amazonaws.com/news-in-short/data/'
 
 csvLinkFiles_path = path
@@ -71,7 +71,7 @@ for file in dirs:
         article_count = 0
         incompatible_count = 0
         
-        for link in linksList:
+        for link in linksList[5241:]:
             try:
                 g = goose.Goose({'target_language': 'fr'})
                 article = g.extract(url=link)
