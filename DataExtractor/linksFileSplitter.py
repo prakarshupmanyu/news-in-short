@@ -2,7 +2,7 @@ import csv
 import os
 import numpy
 
-file = '/home/sarthak/Mydata/Projects/silicon-beach-data/urls/' +  "lemonde-fr-Spider-links_politique.csv"
+file = '/home/melvin/Documents/USC/news-in-short-data/urls/' +  "lesechos-fr-spider-links_politique.csv"
 links = []
 with open(file, "r") as f:
     links = f.readlines()

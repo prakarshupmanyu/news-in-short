@@ -1,0 +1,4 @@
+*.csv
+
+
+DataExtractor/art/*.csv
