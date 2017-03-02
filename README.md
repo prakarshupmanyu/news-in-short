@@ -10,6 +10,7 @@ Few points to remember
   * Only tested code would be pushed to master.
   * When merging features to develop please create a pull request and then merge. This will help us in roling back the changes.
 * For first time git users, please use a git GUI like sourcetree. 
+* Project management: https://trello.com/b/jsQzek79/french-news-for-lazy-butts 
 
 ***
 
