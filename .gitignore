@@ -1,4 +1,4 @@
 *.csv
 
 
-DataExtractor/art/
+DataExtractor/art/*.csv
