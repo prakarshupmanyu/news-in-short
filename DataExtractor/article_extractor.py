@@ -11,15 +11,25 @@ from goose import Goose
 import boto
 import smart_open
 import boto.s3.connection
+from multiprocessing import Pool
 from uuid import getnode as get_mac
 
+print "-----------------------------------------------------------------------"
+print "-----------------------------------------------------------------------\n\n"
 try:
     # Put access_key and secret_key here
     access_key = sys.argv[1] 
     secret_key =  sys.argv[2]
 except IndexError:
-    print "Please add your S3 access key and secret key as arguments: python article_extractor <access key> <secret key>"
+    print "Please add your S3 access key and secret key as arguments: python article_extractor <access key> <secret key> <start row>"
     sys.exit(0)
+
+try:
+    start_value = int(sys.argv[3])
+except IndexError:
+    print "Starting from row :: 0"
+    start_value = 0
+
 
 conn = boto.connect_s3(access_key, secret_key)
 
@@ -52,8 +62,7 @@ for file in dirs:
         linksList = []
 
         read_key = bucket.get_key(file)
-        new_file = file.replace("data","art").replace("links", "data")
-        write_key = bucket.new_key(new_file)
+        
         with smart_open.smart_open(read_key) as fin:
             for line in fin:
                 linksList.append(line)
@@ -66,49 +75,66 @@ for file in dirs:
                 if(len(link) != 0):
                     linksList.append(link)
         """
-        print("no of articles to be extracted : ", len(linksList))
         
-        article_count = 0
-        incompatible_count = 0
-        
-        for link in linksList[5241:]:
-            try:
-                g = goose.Goose({'target_language': 'fr'})
-                article = g.extract(url=link)
-                mainarticle = article.cleaned_text
-                title = article.title
+        number_of_threads = 3
+        number_of_articles_each = 1 + (len(linksList) - start_value) / number_of_threads
+        print "No of articles to be extracted : " + str(len(linksList)-start_value)
+        print "No of threads currently being executed : " + str(number_of_threads)
+        print "No of articles in each thread : " + str(number_of_articles_each)
+        print "-----------------------------------------------------------------------"
+        print "-----------------------------------------------------------------------\n\n"
 
-                response = urllib2.urlopen(link)
-                html = response.read()
+        def get_articles(part_start_value):
+            article_count = 0
+            incompatible_count = 0
+            end_value = part_start_value + number_of_articles_each
+            new_file = file.replace("data","art").replace("links", "data_"+str(part_start_value) + "-" + str(end_value))
+            write_key = bucket.new_key(new_file)
+            
+            for link in linksList[part_start_value:end_value]:
+                try:
+                    g = goose.Goose({'target_language': 'fr'})
+                    article = g.extract(url=link)
+                    mainarticle = article.cleaned_text
+                    title = article.title
 
-                print("Title :" , title)
-                #print("Category :", category)
-                #print("Article Link :", link)
-                #print("newspaper name :", newspaper)
-                #print(mainarticle)
-                #print("\n###############\n")
+                    response = urllib2.urlopen(link)
+                    html = response.read()
 
-                datarow = []
+                    #print("Title :" , title)
+                    #print("Category :", category)
+                    print link
+                    #print("newspaper name :", newspaper)
+                    #print(mainarticle)
+                    #print("\n###############\n")
 
-                datarow.append(title.encode('UTF-8'))
-                datarow.append(link)
-                datarow.append(category.encode('UTF-8'))
-                datarow.append(newspaper.encode('UTF-8'))
-                datarow.append(mainarticle.encode('UTF-8'))
+                    datarow = []
 
-                with open(new_file, 'a') as mycsvfile:
-                    thedatawriter = csv.writer(mycsvfile)
-                    thedatawriter.writerow(datarow)
-                    article_count+=1
-                    print("row written :", article_count)
-                
-            except Exception as e:
-                print("Sorry incompatible article...  reason  : ",e)
-                incompatible_count+=1
+                    datarow.append(title.encode('UTF-8'))
+                    datarow.append(link)
+                    datarow.append(category.encode('UTF-8'))
+                    datarow.append(newspaper.encode('UTF-8'))
+                    datarow.append(mainarticle.encode('UTF-8'))
 
-        output_file = open(new_file,'rb')
-        write_key.set_contents_from_file(output_file)
-        print("File written to S3")
+                    with open(new_file, 'a') as mycsvfile:
+                        thedatawriter = csv.writer(mycsvfile)
+                        thedatawriter.writerow(datarow)
+                        article_count+=1
+                        #print("row written :", article_count)
+                    
+                except Exception as e:
+                    print("Sorry incompatible article...  reason  : ",e,part_start_value)
+                    incompatible_count+=1
+
+            output_file = open(new_file,'rb')
+            write_key.set_contents_from_file(output_file)
+            print(new_file + " written to S3")
+            return [article_count, incompatible_count]
+
+
+        # get compatible and imcompatible articles
+        com_in = Pool(number_of_threads).map(get_articles,list(xrange(start_value,len(linksList),number_of_articles_each)))
+
         end_time = time()
     except Exception as error:
         print(error)
