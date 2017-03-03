@@ -75,25 +75,23 @@ for file in dirs:
                 if(len(link) != 0):
                     linksList.append(link)
         """
-
-        linksList = linksList[start_value:]
         
         number_of_threads = 3
-        number_of_articles_each = 1 + len(linksList) / number_of_threads
-        print "No of articles to be extracted : " + str(len(linksList))
+        number_of_articles_each = 1 + (len(linksList) - start_value) / number_of_threads
+        print "No of articles to be extracted : " + str(len(linksList)-start_value)
         print "No of threads currently being executed : " + str(number_of_threads)
         print "No of articles in each thread : " + str(number_of_articles_each)
         print "-----------------------------------------------------------------------"
         print "-----------------------------------------------------------------------\n\n"
 
-        def get_articles(start_value):
+        def get_articles(part_start_value):
             article_count = 0
             incompatible_count = 0
-            end_value = start_value + number_of_articles_each
-            new_file = file.replace("data","art").replace("links", "data_"+str(start_value) + "-" + str(end_value))
+            end_value = part_start_value + number_of_articles_each
+            new_file = file.replace("data","art").replace("links", "data_"+str(part_start_value) + "-" + str(end_value))
             write_key = bucket.new_key(new_file)
             
-            for link in linksList[start_value:end_value]:
+            for link in linksList[part_start_value:end_value]:
                 try:
                     g = goose.Goose({'target_language': 'fr'})
                     article = g.extract(url=link)
@@ -125,7 +123,7 @@ for file in dirs:
                         #print("row written :", article_count)
                     
                 except Exception as e:
-                    print("Sorry incompatible article...  reason  : ",e)
+                    print("Sorry incompatible article...  reason  : ",e,part_start_value)
                     incompatible_count+=1
 
             output_file = open(new_file,'rb')
