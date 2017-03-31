@@ -7,8 +7,6 @@ import random
 import tensorflow as tf
 from six.moves import xrange
 
-vocab_size = 1000
-embedding_dim = 100
 
 
 with open('/home/sarthak/PycharmProjects/silicon-beachNLP/news-in-short/processedData/article_and_heading_data.pickle', 'rb') as fp:
@@ -20,13 +18,15 @@ print("no of heading : ", len(headings))
 print("no of articles : ", len(content))
 
 
-def get_vocab(lst):
+vocab_size = 0
+
+def get_vocab(totaldata_list):
 
     """
         Uses the lst to create data dictionaries and vocab
 
         Args:
-          lst: A concatenated list form of the [headings]+ [article]. This is our entire data set
+          totaldata_list: A concatenated list form of the [headings]+ [article]. This is our entire data set
 
         Returns:
         1. count: a list of lists where each sub list is of the form [<word>, <word occurrence count>]
@@ -38,13 +38,19 @@ def get_vocab(lst):
     # Note : UNK is for words out of vocab of most common words. word_to_id['UNK'] = 0 and id_to_word[0] = 'UNK'
 
     count = [['UNK', -1]]
-    words =''
-    for item in lst:
-        words = words + str(item).replace('\n', '<eos>')
+    all_content = ''
+    for current_item in totaldata_list:
+        all_content = all_content + str(current_item).replace("\n", "")
 
-    words= words.split(" ")
+
+    words= all_content.split(" ")
+    print("no of unique words :", len(collections.Counter(words)))
+
+    vocab_size = int(.80*len(collections.Counter(words)))  # set vocab size depending on the number of total unique words in the corpus
+    print("Considering a vocab size of :", vocab_size)
     # from the list from of data, find the the top <vocab size> words
     count.extend(collections.Counter(words).most_common(vocab_size - 1))
+    collections.Counter(words)
     word_to_id = dict()
     for word, _ in count:
         word_to_id[word] = len(word_to_id)
@@ -62,10 +68,10 @@ def get_vocab(lst):
     count[0][1] = unk_count
 
     id_to_word = dict(zip(word_to_id.values(), word_to_id.keys()))
-    return data, count, word_to_id, id_to_word
+    return data, count, word_to_id, id_to_word, vocab_size
 
 
-data, count, word_to_id, id_to_word = get_vocab(content+headings)
+data, count, word_to_id, id_to_word, vocab_size = get_vocab(content+headings)
 
 
 # Generating the training batch for skip gram model

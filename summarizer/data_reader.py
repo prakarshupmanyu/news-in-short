@@ -2,7 +2,7 @@ import pandas as pd
 from six.moves import cPickle as pickle
 
 colnames = ['heading', 'link', 'topic', 'source', 'content']
-df1=pd.read_csv("/home/sarthak/Mydata/Projects/silicon-beach-data/urls/test2.csv", names=colnames)
+df1=pd.read_csv("/home/sarthak/Mydata/Projects/silicon-beach-data/urls/lemonde-fr-Spider-data_politique.csv", names=colnames)
 
 contentList = df1.content.tolist()
 headList = df1.heading.tolist()
