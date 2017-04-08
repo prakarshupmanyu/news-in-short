@@ -6,6 +6,13 @@ import keras
 from keras.preprocessing import sequence
 from keras.utils import np_utils
 import random, sys
+from keras.models import Sequential
+from keras.layers.core import Dense, Activation, Dropout, RepeatVector, Merge, TimeDistributedDense
+from keras.layers.recurrent import LSTM
+from keras.layers.embeddings import Embedding
+from keras.regularizers import l2
+from keras.layers.core import Lambda
+import keras.backend as K
 
 maxlend = 25
 maxlenh = 25
@@ -45,3 +52,33 @@ empty = 0
 eos = 1
 idx2word[empty] = '_'
 idx2word[eos] = '~'
+
+
+###################################### Model ###########################################
+
+random.seed(seed)
+np.random.seed(seed)
+
+regularizer = l2(weight_decay) if weight_decay else None
+
+################################### RNN Model ##########################################
+
+"""
+Starting with stacked LSTM; identical to the bottom layer in training model
+"""
+
+rnn_model = Sequential()
+rnn_model.add(Embedding(vocab_size, embedding_size,
+	input_length=maxlen,
+	W_regularizer=regularizer, dropout=p_emb, weights=[embedding], mask_zero=True,
+	name='embedding_1'))
+
+for i in range(rnn_layers):
+	lstm = LSTM(rnn_size, return_sequences=True,
+		W_regularizer=regularizer, U_regularizer=regularizer,
+		b_regularizer=regularizer, dropout_W=p_W, dropout_U=p_U,
+		name='lstm_%d'%(i+1)
+		)
+	rnn_model.add(lstm)
+	rnn_model.add(Dropout(p_dense, name='dropout_%d'%(i+1)))
+
