@@ -1,14 +1,10 @@
-import os
-from six.moves import cPickle as pickle
-from six.moves import xrange
+import os, random, sys
+import cPickle as pickle
 import numpy as np
-import keras
 from keras.preprocessing import sequence
 from keras.utils import np_utils
-import random, sys
 from keras.models import Sequential
-from keras.layers.core import Dense, Activation, Dropout, RepeatVector, SpatialDropout1D
-from keras.layers import Merge, TimeDistributed
+from keras.layers.core import Dense, Activation, Dropout, RepeatVector
 from keras.layers.recurrent import LSTM
 from keras.layers.embeddings import Embedding
 from keras.regularizers import l2
@@ -16,19 +12,20 @@ from keras.layers.core import Lambda
 import keras.backend as K
 import h5py
 
-maxlend = 25
+
+#maxlend = 50 # 0 - if we dont want to use description at all
+maxlend = 50
 maxlenh = 25
 maxlen = maxlend + maxlenh
-rnn_size = 512 
-rnn_layers = 3  
+rnn_size = 512
+rnn_layers = 3  # match FN1
 batch_norm = False
 
-#Number of nodes from the top LSTM layer used for activation 
-activation_rnn_size = 40 if maxlend else 0
+activation_rnn_size = 50 if maxlend else 0
 
-#Training parameters
+# training parameters
 seed = 42
-p_W, p_U, p_dense, p_emb, weight_decay = 0, 0, 0, 0, 0
+p_W, p_U, p_dense, weight_decay = 0, 0, 0, 0
 optimizer = 'adam'
 batch_size = 64
 
@@ -36,133 +33,162 @@ nb_train_samples = 30000
 nb_val_samples = 3000
 
 
-############################## Read Word embedding ####################################
+DEBUG = True
+
+
+################################## Read Word Embedding ##################################
 
 with open('../DataExtractor/art/vocabEmbeddings.pkl', 'rb') as fp:
-	#embedding, idx2word, word2idx, glove_idx2idx = pickle.load(fp)
 	embedding, idx2word, word2idx = pickle.load(fp)
-vocab_size, embedding_size = embedding.shape
 
+vocab_size, embedding_size = embedding.shape
 nb_unknown_words = 10
 
 for i in range(nb_unknown_words):
-	idx2word[vocab_size - 1 - i] = '<%d>'%i
+	idx2word[vocab_size-1-i] = '<%d>'%i
 
 for i in range(vocab_size-nb_unknown_words, len(idx2word)):
-    idx2word[i] = idx2word[i] + '^	'
+    idx2word[i] = idx2word[i]+'^'
 
 empty = 0
 eos = 1
 idx2word[empty] = '_'
 idx2word[eos] = '~'
 
+#PRINTING
+def prt(label, x):
+	print label+':',
+	for w in x:
+		print idx2word[w],
+	print
 
-###################################### Model ###########################################
 
+################################## Model ##################################
+
+# seed weight initialization
 random.seed(seed)
 np.random.seed(seed)
 
 regularizer = l2(weight_decay) if weight_decay else None
 
 
-################################### RNN Model ##########################################
-
-"""
-Starting with stacked LSTM; identical to the bottom layer in training model
-"""
+################################## RNN Model ##################################
 
 rnn_model = Sequential()
-
-"""#Keras1
-rnn_model.add(Embedding(vocab_size, embedding_size,
-	input_length=maxlen,
-	W_regularizer=regularizer, dropout=p_emb, weights=[embedding], mask_zero=True,
-	name='embedding_1'))
 """
-#Keras 2
-rnn_model.add(Embedding(
-    input_dim=vocab_size, 
-    output_dim=embedding_size,
-    input_length=maxlen,
-    embeddings_regularizer=regularizer, 
-    weights=[embedding], 
-    mask_zero=True,
-    name='embedding_1'))
-rnn_model.add(SpatialDropout1D(rate=p_emb))
+if DEBUG:
+	from keras.layers import InputLayer
+	model_input = InputLayer(input_shape=(maxlen,))
+	rnn_model.add(model_input)
+	rnn_model.output.tag.test_value = np.random.randint(vocab_size,size=(batch_size,maxlen)).astype('float32')
+"""
+rnn_model.add(
+	Embedding(
+		vocab_size,
+		embedding_size,
+		input_length=maxlen,
+		#batch_input_shape=(batch_size,maxlen),
+		embeddings_regularizer=regularizer,
+		weights=[embedding],
+		mask_zero=True,
+		name='embedding_1'))
 
 for i in range(rnn_layers):
-	"""
-	lstm = LSTM(rnn_size, return_sequences=True,
-		W_regularizer=regularizer, U_regularizer=regularizer,
-		b_regularizer=regularizer, dropout_W=p_W, dropout_U=p_U,
-		name='lstm_%d'%(i+1)
-		)
-	"""
-
-	#Keras2
-	lstm = LSTM(rnn_size, 
-        recurrent_regularizer=regularizer, 
-        name='lstm_%d'%(i+1),
-        bias_regularizer=regularizer, 
-        dropout=p_W, 
-        recurrent_dropout=p_U,
-        kernel_regularizer=regularizer, 
-        return_sequences=True)
-
+	lstm = LSTM(
+		rnn_size,
+		return_sequences=True, # batch_norm=batch_norm,
+		kernel_regularizer=regularizer,
+		recurrent_regularizer=regularizer,
+		bias_regularizer=regularizer,
+		dropout=p_W,
+		recurrent_dropout=p_U,
+		name='lstm_%d'%(i+1))
 	rnn_model.add(lstm)
 	rnn_model.add(Dropout(p_dense, name='dropout_%d'%(i+1)))
-
-
-###################################### Load ###########################################
-
 """
-Use bottom weights from the trained model, and save the top weights for later
+if DEBUG:
+	print rnn_model.output.tag.test_value.shape
 """
 
-def str_shape(x):
-	return 'x'.join(map(str,x.shape))
+################################## Load ##################################
 
-def inspect_model(model):
-	print model.name
-	for i,l in enumerate(model.layers):
-		print i, 'cls=%s name=%s'%(type(l).__name__, l.name)
-		weights = l.get_weights()
-		for weight in weights:
-			print str_shape(weight),
-		print
+rnn_model.load_weights('../DataExtractor/art/train.hdf5', by_name=True)
 
-"""
-Modified version of keras load_weights that loads as much as it can
-if there is a mismatch between file and model. It returns the weights
-of the first layer in which the mismatch has happened
-"""
-def load_weights(model, filepath):
-	print 'Loading', filepath, 'to', model.name
-	flattened_layers = model.layers
-	with h5py.File(filepath, mode='r') as f:
-		#new file format
-		layer_names = [n.decode('utf8') for n in f.attrs['layer_names']]
+with h5py.File('../DataExtractor/art/train.hdf5', mode='r') as f:
+	if 'layer_names' not in f.attrs and 'model_weights' in f:
+		f = f['model_weights']
+	weights = [np.copy(v) for v in f['time_distributed_1'].itervalues()]
 
-		#Batch weight value assignments in a single backend call which provides a speedup in TensorFlow.
-		weight_value_tuples = []
-		for name in layer_names:
-			print name
-			g = f[name]
-			weight_names = [n.decode('utf8') for n in g.attrs['weight_names']]
-			if len(weight_names):
-				weight_values = [g[weight_name] for weight_name in weight_names]
-				try:
-					layer = model.get_layer(name=name)
-				except:
-					layer = None
-				if not layer:
-					print 'failed to find layer', name, 'in model'
-					print 'weights', ' '.join(str_shape(w) for w in weight_values)
-					print 'stopping to load all other layers'
-					weight_values = [np.array(w) for w in weight_values]
-					break
-				symbolic_weights = layer.trainable_weights + layer.non_trainable_weights
-				weight_value_tuples += zip(symbolic_weights, weight_values)
-				weight_values = None
-		K.batch_set_value(weight_value_tuples)
-	return weight_values
+
+################################## Summary Model ##################################
+
+def simple_context(X, mask, n=activation_rnn_size, maxlend=maxlend, maxlenh=maxlenh):
+	desc, head = X[:,:maxlend,:], X[:,maxlend:,:]
+	head_activations, head_words = head[:,:,:n], head[:,:,n:]
+	desc_activations, desc_words = desc[:,:,:n], desc[:,:,n:]
+
+	# activation for every head word and every desc word
+	print head_activations
+	print desc_activations
+	activation_energies = K.batch_dot(head_activations, desc_activations, axes=([2],[2]))
+	# make sure we dont use description words that are masked out
+	activation_energies = activation_energies + -1e20*K.expand_dims(1.-K.cast(mask[:, :maxlend],'float32'),1)
+
+	# for every head word compute weights for every desc word
+	activation_energies = K.reshape(activation_energies,(-1,maxlend))
+	activation_weights = K.softmax(activation_energies)
+	activation_weights = K.reshape(activation_weights,(-1,maxlenh,maxlend))
+
+	# for every head word compute weighted average of desc words
+	desc_avg_word = K.batch_dot(activation_weights, desc_words, axes=([2],[1]))
+	"""
+	if DEBUG:
+		print desc_avg_word.tag.test_value.shape
+		print head_words.tag.test_value.shape
+	"""
+	return K.concatenate((desc_avg_word, head_words))
+
+model = Sequential()
+model.add(rnn_model)
+
+if activation_rnn_size:
+	model.add(Lambda(
+		simple_context,
+		mask = lambda inputs,
+		mask: mask[:,maxlend:],
+		output_shape = lambda input_shape: (input_shape[0], maxlenh, 2*(rnn_size - activation_rnn_size)),
+		name='simplecontext_1'))
+
+model.compile(loss='categorical_crossentropy', optimizer='adam')
+
+# out very own softmax
+def output2probs(output):
+	output = np.dot(output, weights[0]) + weights[1]
+	output -= output.max()
+	output = np.exp(output)
+	output /= output.sum()
+	return output
+
+
+################################## Test ##################################
+
+
+def lpadd(x, maxlend=maxlend, eos=eos):
+	"""left (pre) pad a description to maxlend and then add eos.
+	The eos is the input to predicting the first word in the headline
+	"""
+	if maxlend == 0:
+		return [eos]
+	n = len(x)
+	if n > maxlend:
+		x = x[-maxlend:]
+		n = maxlend
+	return [empty]*(maxlend-n) + x + [eos]
+
+samples = [lpadd([3]*26)]
+# pad from right (post) so the first maxlend will be description followed by headline
+data = sequence.pad_sequences(samples, maxlen=maxlen, value=empty, padding='post', truncating='post')
+
+probs = model.predict(data, verbose=0, batch_size=1)
+
+print probs

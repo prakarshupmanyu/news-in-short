@@ -2,12 +2,14 @@ import pandas as pd
 from six.moves import cPickle as pickle
 
 colnames = ['heading', 'link', 'topic', 'source', 'content']
-df1=pd.read_csv("/home/sarthak/Mydata/Projects/silicon-beach-data/urls/lemonde-fr-Spider-data_politique.csv", names=colnames)
+#df1=pd.read_csv("/home/sarthak/Mydata/Projects/silicon-beach-data/urls/lemonde-fr-Spider-data_politique.csv", names=colnames)
+df1=pd.read_csv("/home/melvin/Documents/USC/news-in-short/DataExtractor/art/test.csv", names=colnames)
 
 contentList = df1.content.tolist()
 headList = df1.heading.tolist()
 
-pickleFile = '/home/sarthak/PycharmProjects/silicon-beachNLP/news-in-short/processedData/article_and_heading_data.pickle'
+#pickleFile = '/home/sarthak/PycharmProjects/silicon-beachNLP/news-in-short/processedData/article_and_heading_data.pickle'
+pickleFile = '/home/melvin/Documents/USC/news-in-short/DataExtractor/art/lesechos-fr-spider-data_6445-8935_politique.pickle'
 try:
     f = open(pickleFile, 'wb')
     save = {

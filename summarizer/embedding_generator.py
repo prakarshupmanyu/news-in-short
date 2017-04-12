@@ -9,7 +9,8 @@ from six.moves import xrange
 
 
 
-with open('/home/sarthak/PycharmProjects/silicon-beachNLP/news-in-short/processedData/article_and_heading_data.pickle', 'rb') as fp:
+#with open('/home/sarthak/PycharmProjects/silicon-beachNLP/news-in-short/processedData/article_and_heading_data.pickle', 'rb') as fp:
+with open('/home/melvin/Documents/USC/news-in-short/DataExtractor/art/lesechos-fr-spider-data_6445-8935_politique.pickle', 'rb') as fp:
     data = pickle.load(fp)
     content = data['content']
     headings = data['heading']
@@ -230,7 +231,7 @@ with tf.Session(graph=graph) as session:
 
 
 
-with open('/home/sarthak/PycharmProjects/silicon-beachNLP/news-in-short/processedData/vocabEmbeddings.pkl','wb') as f:
+with open('/home/melvin/Documents/USC/news-in-short/DataExtractor/art/vocabEmbeddings.pkl','wb') as f:
     pickle.dump((final_embeddings, id_to_word, word_to_id),f)
 
 
@@ -259,7 +260,7 @@ for article in content:
 
     train_data.append(current_article)
 
-with open('/home/sarthak/PycharmProjects/silicon-beachNLP/news-in-short/processedData/train_data.pkl','wb') as f:
+with open('/home/melvin/Documents/USC/news-in-short/DataExtractor/art/train_data.pkl','wb') as f:
     pickle.dump((train_data,train_labels),f)
 
 
