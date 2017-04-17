@@ -13,6 +13,7 @@ from keras.regularizers import l2
 from keras.layers.core import Lambda
 import keras.backend as K
 import h5py
+import Levenshtein
 
 
 #maxlend = 50 # 0 - if we dont want to use description at all
@@ -118,9 +119,10 @@ if DEBUG:
 rnn_model.load_weights('../DataExtractor/art/train.hdf5', by_name=True)
 
 with h5py.File('../DataExtractor/art/train.hdf5', mode='r') as f:
+	
 	if 'layer_names' not in f.attrs and 'model_weights' in f:
 		f = f['model_weights']
-	print f['time_distributed_1'].itervalues()
+
 	weights = [np.copy(v) for v in f['time_distributed_1'].itervalues()]
 
 
@@ -174,9 +176,11 @@ def output2probs(output):
 	output = np.asarray(output)
 	weights[0] = np.asarray(weights[0])
 	
-	print weights
+	#print weights
+	#print output
 
-	output = (np.dot(output, weights[0]) + weights[1])
+	#output = (np.dot(output, weights[0]) + weights[1]) # TypeError: Cannot cast array data from dtype('float32') to dtype('<U32') according to the rule 'safe'
+	
 	output -= output.max()
 	output = np.exp(output)
 	output /= output.sum()
@@ -232,7 +236,6 @@ def beamsearch(predict, start=[empty]*maxlend + [eos], avoid=None, avoid_score=1
     while live_samples:
         # for every possible live sample calc prob for every possible label 
         probs = predict(live_samples, empty=empty)
-        assert vocab_size == probs.shape[1]
 
         # total score for every sample is sum of -log of word prb
         cand_scores = np.array(live_scores)[:,None] - np.log(probs)
