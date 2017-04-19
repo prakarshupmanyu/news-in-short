@@ -36,12 +36,15 @@ nb_val_samples = 100 #For training on system
 
 
 ################################################# Embedding #################################################
-
-with open('../DataExtractor/art/vocabEmbeddings.pkl', 'rb') as fp:
+wordEmbeddingFile = '../DataExtractor/art/vocabEmbeddings.pkl'
+wordEmbeddingFile = '/home/prakarsh/Desktop/vocabEmbeddings.pkl'
+with open(wordEmbeddingFile, 'rb') as fp:
     embedding, idx2word, word2idx = pickle.load(fp)
 vocab_size, embedding_size = embedding.shape
 
-with open('../DataExtractor/art/train_data.pkl', 'rb') as fp:
+trainingDataFile = '../DataExtractor/art/train_data.pkl'
+trainingDataFile = '/home/prakarsh/Desktop/train_data.pkl'
+with open(trainingDataFile, 'rb') as fp:
     X, Y = pickle.load(fp)
 
 nb_unknown_words = 10
