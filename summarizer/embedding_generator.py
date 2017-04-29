@@ -9,9 +9,10 @@ from six.moves import xrange
 
 pickleFileName = '/home/sarthak/PycharmProjects/silicon-beachNLP/news-in-short/processedData/article_and_heading_data.pickle'
 pickleFileName = '/home/melvin/Documents/USC/news-in-short/DataExtractor/art/lesechos-fr-spider-data_6445-8935_politique.pickle'
-pickleFileName = '/home/prakarsh/Desktop/ouest-france-spider-data_18889-56544_politique.pickle'
+pickleFileName = '/home/prakarsh_upmanyu23/latribune-fr-Spider-data_0-5848_politique.pickle'
+pickleFileName = '/home/prakarsh_upmanyu23/output_files/concatenated.pickle'
 
-with open(pickleFileName, 'rb') as fp:
+with open(pickleFileName, 'r') as fp:
     data = pickle.load(fp)
     content = data['content']
     headings = data['heading']
@@ -42,13 +43,15 @@ def get_vocab(totaldata_list):
     count = [['UNK', -1]]
     all_content = ''
     for current_item in totaldata_list:
-        all_content = all_content + str(current_item).replace("\n", "")
+        #current_item = str(current_item).decode('iso-8859-9').encode('US-ASCII', 'replace')
+        #current_item = str(current_item).decode('utf-8')
+        all_content = all_content + str(current_item).lower().replace("\n", "")
 
 
     words= all_content.split(" ")
     print("no of unique words :", len(collections.Counter(words)))
 
-    vocab_size = int(.80*len(collections.Counter(words)))  # set vocab size depending on the number of total unique words in the corpus
+    vocab_size = int(.50*len(collections.Counter(words)))  # set vocab size depending on the number of total unique words in the corpus
     print("Considering a vocab size of :", vocab_size)
     # from the list from of data, find the the top <vocab size> words
     count.extend(collections.Counter(words).most_common(vocab_size - 1))
@@ -74,7 +77,7 @@ def get_vocab(totaldata_list):
 
 
 data, count, word_to_id, id_to_word, vocab_size = get_vocab(content+headings)
-
+#print id_to_word
 
 # Generating the training batch for skip gram model
 
@@ -155,7 +158,7 @@ with graph.as_default():
   valid_dataset = tf.constant(valid_examples, dtype=tf.int32)
 
   # Ops and variables pinned to the CPU because of missing GPU implementation
-  with tf.device('/cpu:0'):
+  with tf.device('/gpu:0'):
 
     # embedding tensor of the shape <vocab size> X <embedding_dimension>
     # Note: we are generating embeddings only for the top <vocab_size> ie most common words and not all words in the corpus
@@ -232,7 +235,8 @@ with tf.Session(graph=graph) as session:
 
 
 wordEmbeddingFile = '/home/melvin/Documents/USC/news-in-short/DataExtractor/art/vocabEmbeddings.pkl'
-wordEmbeddingFile = '/home/prakarsh/Desktop/vocabEmbeddings.pkl'
+wordEmbeddingFile = '/home/prakarsh_upmanyu23/vocabEmbeddings.pkl'
+wordEmbeddingFile = '/home/prakarsh_upmanyu23/output_files/concatenated_vocabEmbeddings.pkl'
 with open(wordEmbeddingFile, 'wb') as f:
     pickle.dump((final_embeddings, id_to_word, word_to_id),f)
 
@@ -263,8 +267,7 @@ for article in content:
     train_data.append(current_article)
 
 trainingDataFile = '/home/melvin/Documents/USC/news-in-short/DataExtractor/art/train_data.pkl'
-trainingDataFile = '/home/prakarsh/Desktop/train_data.pkl'
+trainingDataFile = '/home/prakarsh_upmanyu23/train_data.pkl'
+trainingDataFile = '/home/prakarsh_upmanyu23/output_files/concatenated_train_data.pkl'
 with open(trainingDataFile, 'wb') as f:
     pickle.dump((train_data,train_labels),f)
-
-

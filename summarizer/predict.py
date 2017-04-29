@@ -19,7 +19,7 @@ import Levenshtein
 #maxlend = 50 # 0 - if we dont want to use description at all
 maxlend = 50
 #maxlenh = 25 #shows an error with anything other than 50
-maxlenh = 50
+maxlenh = 25
 maxlen = maxlend + maxlenh
 rnn_size = 512
 rnn_layers = 3  # match FN1
@@ -42,7 +42,8 @@ DEBUG = True
 
 ################################## Read Word Embedding ##################################
 
-with open('../DataExtractor/art/vocabEmbeddings.pkl', 'rb') as fp:
+wordEmbeddingFile = '/home/prakarsh_upmanyu23/vocabEmbeddings.pkl'
+with open(wordEmbeddingFile, 'rb') as fp:
 	embedding, idx2word, word2idx = pickle.load(fp)
 
 vocab_size, embedding_size = embedding.shape
@@ -116,9 +117,10 @@ if DEBUG:
 
 ################################## Load ##################################
 
-rnn_model.load_weights('../DataExtractor/art/train.hdf5', by_name=True)
+hdf5_path = '/home/prakarsh_upmanyu23/'
+rnn_model.load_weights(hdf5_path+'train.hdf5', by_name=True)
 
-with h5py.File('../DataExtractor/art/train.hdf5', mode='r') as f:
+with h5py.File(hdf5_path+'train.hdf5', mode='r') as f:
 	
 	if 'layer_names' not in f.attrs and 'model_weights' in f:
 		f = f['model_weights']

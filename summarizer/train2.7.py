@@ -1,4 +1,4 @@
-import os, random, sys
+import os, random, sys, h5py
 import cPickle as pickle
 from sklearn.model_selection import train_test_split
 import numpy as np
@@ -28,22 +28,36 @@ seed = 42
 p_W, p_U, p_dense, weight_decay = 0, 0, 0, 0
 optimizer = 'adam'
 LR = 1e-4
-batch_size = 64
+batch_size = 32
 nflips = 10
 
-nb_train_samples = 30000
-nb_val_samples = 100 #For training on system
+nb_train_samples = 200000
+nb_val_samples = 1000 #For training on system
 
 
 ################################################# Embedding #################################################
 wordEmbeddingFile = '../DataExtractor/art/vocabEmbeddings.pkl'
-wordEmbeddingFile = '/home/prakarsh/Desktop/vocabEmbeddings.pkl'
+wordEmbeddingFile = '/home/prakarsh_upmanyu23/vocabEmbeddings.pkl'
+wordEmbeddingFile = '/home/prakarsh_upmanyu23/output_files/concatenated_vocabEmbeddings.pkl'
 with open(wordEmbeddingFile, 'rb') as fp:
     embedding, idx2word, word2idx = pickle.load(fp)
+'''
+with open('id_to_word.txt', 'a') as f:
+    f.write(str(embedding) + "\n")
+    f.write(str(idx2word) + "\n")
+    f.write(str(word2idx) + "\n")
+    f.write("\n")
+
+
+sys.exit()
+'''
 vocab_size, embedding_size = embedding.shape
 
+print "vocab size : ", vocab_size
+
 trainingDataFile = '../DataExtractor/art/train_data.pkl'
-trainingDataFile = '/home/prakarsh/Desktop/train_data.pkl'
+trainingDataFile = '/home/prakarsh_upmanyu23/train_data.pkl'
+trainingDataFile = '/home/prakarsh_upmanyu23/output_files/concatenated_train_data.pkl'
 with open(trainingDataFile, 'rb') as fp:
     X, Y = pickle.load(fp)
 
@@ -128,11 +142,13 @@ model.add(TimeDistributed(Dense(vocab_size,
     name = 'time_distributed_1')))
 model.add(Activation('softmax', name='activation_1'))
 
+optimizer = RMSprop(lr=0.01, decay=0.9)
 model.compile(loss='categorical_crossentropy', optimizer=optimizer)
-K.set_value(model.optimizer.lr,np.float32(LR))
+#K.set_value(model.optimizer.lr,np.float32(LR))
 
-if os.path.exists('../DataExtractor/art/train.hdf5'):
-    model.load_weights('../DataExtractor/art/train.hdf5')
+hdf5_path = '/home/prakarsh_upmanyu23/output_files/'
+if os.path.exists(hdf5_path + 'concatenated_train.hdf5'):
+    model.load_weights(hdf5_path + 'concatenated_train.hdf5')
 
 
 ################################################# Test #################################################
@@ -270,7 +286,6 @@ def prt(label, x):
         print idx2word[w],
     print
 
-
 def test_gen(gen, n=5):
     Xtr,Ytr = next(gen)
     for i in range(n):
@@ -289,7 +304,6 @@ test_gen(gen(X_train, Y_train, nflips=6, model=model, debug=False, batch_size=ba
 
 valgen = gen(X_test, Y_test,nb_batches=3, batch_size=batch_size)
 
-
 #check that valgen repeats itself after nb_batches
 for i in range(4):
     test_gen(valgen, n=1)
@@ -301,22 +315,22 @@ history = {}
 traingen = gen(X_train, Y_train, batch_size=batch_size, nflips=nflips, model=model)
 valgen = gen(X_test, Y_test, nb_batches=nb_val_samples//batch_size, batch_size=batch_size)
 
-r = next(traingen)
-print (r[0].shape, r[1].shape, len(r))
+#r = next(traingen)
+#print (r[0].shape, r[1].shape, len(r))
 
 #for iteration in range(500):
 for iteration in range(40):
     print 'Iteration', iteration
     h = model.fit_generator(traingen, 
-        #steps_per_epoch=nb_train_samples//batch_size,
-        steps_per_epoch=10,
+        steps_per_epoch=nb_train_samples//batch_size,
+        #steps_per_epoch=10,
         epochs=1,
         validation_data=valgen,
         validation_steps=nb_val_samples
         )
     for k,v in h.history.iteritems():
         history[k] = history.get(k,[]) + v
-    with open('../DataExtractor/art/train.history.pkl','wb') as fp:
+    with open(hdf5_path + 'concatenated_train.history.pkl','wb') as fp:
         pickle.dump(history,fp,-1)
-    model.save_weights('../DataExtractor/art/train.hdf5', overwrite=True)
+    model.save_weights(hdf5_path + 'concatenated_train.hdf5', overwrite=True)
     #gensamples(batch_size=batch_size)

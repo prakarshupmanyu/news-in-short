@@ -91,3 +91,4 @@ ENV/
 # CSV files
 *.csv
 DataExtractor/art/*.csv
+output_files/
